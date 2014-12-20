@@ -2,10 +2,15 @@ var user = require('../models/user');
 var express = require('express');
 var router = express.Router();
 
+var appStr = function(){return '<script src="/javascript/user/app.js" ></script>';};
+
 /* GET users listing. */
 router.get('/', function(req, res) {
-  //var alice = res.nanodb.db.use('propmgt');
-  res.send('respond with a resource');
+  user.findByEmail("willsmelser@gmail.com",function(err,user){
+      console.log(user,err);
+      var appData = JSON.stringify({"user":user.rows[0].value});
+      res.render('user/index',{message:req.flash('message'),"appData":appData,"angularApp":appStr()});
+  });
 });
 
 router.get('/login', function(req, res){

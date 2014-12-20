@@ -1,0 +1,38 @@
+<div ng-app="UserApp">
+<section class="container-fluid" ng-controller="UserController as userCtrl">
+    <h1>Manage User Account</h1>
+    <hr>
+
+    <div class="row">
+        <!-- left hand navigation -->
+        <div class="col-md-2">{{>nav}}</div>
+
+        <!-- main content -->
+        <div class="col-md-10" ng-show="userCtrl.isCurrentView(1)">
+            <ul>
+                <li>Name: //userCtrl.user.name//</li>
+                <li>Email: //userCtrl.user.email//</li>
+            </ul>
+        </div>
+        <div class="col-md-10" ng-show="userCtrl.isCurrentView(2)">
+            <form name="userDetailsForm" class="css-form" novalidate>
+                <ul>
+                    <li>
+                        <fieldset>
+                            <label for="name">Name:</label>
+                            <input name="name" type="text" ng-model="user.name" value="//userCtrl.user.name//" />
+                        </fieldset>
+                    </li>
+                    <li>
+                        <fieldset>
+                            <label for="email">Email:</label>
+                            <input name="email" type="email" ng-model="user.email" value="//userCtrl.user.email//" required>
+                        </fieldset>
+                    </li>
+                </ul>
+                <div ng-show="userDetailsForm.$invalid">Invalid Form</div>
+            </form>
+        </div>
+    </div>
+</section>
+</div>

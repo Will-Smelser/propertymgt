@@ -20,7 +20,10 @@ var app = express();
 //app.set('views', path.join(__dirname, 'views'));
 //app.set('view engine', 'mustache');
 
-app.engine('handlebars', handlebars({defaultLayout: 'main'}));
+app.engine('handlebars', handlebars({
+    defaultLayout: 'main',
+    partialsDir: ['views/user/partials']
+}));
 app.set('view engine', 'handlebars');
 app.enable('view cache');
 

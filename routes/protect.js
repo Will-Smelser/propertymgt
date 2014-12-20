@@ -10,7 +10,7 @@ var router = express.Router();
 
 var User = require("../models/user");
 
-var neverProtect = ["/user/login","user/register"];
+var neverProtect = ["/user/login","user/register","/user/"];
 
 /* GET home page. */
 router.get('*', function(req, res, next) {

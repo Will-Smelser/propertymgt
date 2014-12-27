@@ -1,20 +1,28 @@
-var user = require('../models/user');
-var express = require('express');
-var router = express.Router();
+var user        = require('../models/user');
+var express     = require('express');
+var path        = require('path');
+var router      = express.Router();
 
-var appStr = function(){return '<script src="/javascript/user/app.js" ></script>';};
+
+var appStr   = '<script src="/user/app" ></script>';
+var modelStr = '<script src="/user/model" ></script>';
 
 /* GET users listing. */
 router.get('/', function(req, res) {
   user.findByEmail("willsmelser@gmail.com",function(err,user){
       console.log(user,err);
       var appData = JSON.stringify({"user":user.rows[0].value});
-      res.render('user/index',{message:req.flash('message'),"appData":appData,"angularApp":appStr()});
+      res.render('user/index',{
+          message:req.flash('message'),
+          "appData":appData,
+          "angularApp":appStr,
+          "angularModel":modelStr
+      });
   });
 });
 
 router.get('/login', function(req, res){
-    res.render('user/login',{message:req.flash('message')});
+    res.render('user/login',{message:req.flash('message'),appData:"{}"});
 });
 
 router.post('/login', function(req, res){
@@ -33,10 +41,33 @@ router.post('/login', function(req, res){
 });
 
 router.get('/login_success', function(req, res){
-    console.log(req.session);
-    console.log(res.session);
-    res.render('user/login_success',{username:req.session.name});
+    res.render('user/login_success',{username:req.session.name,appData:"{}"});
 });
 
+router.get('/app',function(req,res){
+    res.sendFile(path.resolve(__dirname+'/../public/javascript/user/app.js'));
+});
+router.get('/model',function(req,res){
+    res.sendFile(path.resolve(__dirname+'/../models/shared/user.js'));
+});
 
+router.put('/',function(req,res){
+    console.log("put request:",req.body);
+    console.log("_id is:",req.body._id);
+    user.insert(req.body,req)
+        .then(function(user){
+            console.log(user);
+            res.send(JSON.stringify(user));
+        })
+        .fail(function(code){
+            var message = code+" - Unknown Error";
+            switch(code){
+                case 400: message = "Invalid user data.  Try again.";break;
+                case 401: message = "Unauthorized.  Please logout and try again.";break;
+                case 500: message = "Internal Error.  Failed to save to database.";break;
+            }
+            console.log("fail called",message);
+            res.status(code).send(message);
+        });
+});
 module.exports = router;

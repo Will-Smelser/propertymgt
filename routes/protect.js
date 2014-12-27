@@ -10,10 +10,10 @@ var router = express.Router();
 
 var User = require("../models/user");
 
-var neverProtect = ["/user/login","user/register","/user/"];
+var neverProtect = ["/user/login","/user/register","/user/","/user/model","/user/app","/user"];
 
 /* GET home page. */
-router.get('*', function(req, res, next) {
+router.all('*', function(req, res, next) {
     console.log("Called protect");
 
     for(var x in neverProtect){
@@ -22,20 +22,17 @@ router.get('*', function(req, res, next) {
     }
 
     if(!req.session.loggedIn){
-        return res.redirect("/user/login");
+        switch(req.method.toUpperCase()){
+            case "GET":
+                return res.redirect("/user/login");
+            default:
+                res.status(401).send("Unauthorized - Please Login");
+                return;
+        }
     }
 
     next();
-    /*
-    db.view('user','byName',{key:'admin'},function(err, body) {
-            console.log(body);
-    });
-
-    db.get('_all_docs',{},function(err,body){
-        if(!err) console.log(body);
-    });
-    */
-    //next();
 });
+
 
 module.exports = router;

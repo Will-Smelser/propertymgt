@@ -15,22 +15,28 @@
             </ul>
         </div>
         <div class="col-md-10" ng-show="userCtrl.isCurrentView(2)">
-            <form name="userDetailsForm" class="css-form" novalidate>
+
+            <div ng-show="userCtrl.messageGood">//userCtrl.messageGood//</div>
+            <div ng-show="userCtrl.messageError">//userCtrl.messageError//</div>
+
+            <form name="userDetailsForm" class="css-form"
+                  ng-submit="userDetailsForm.$valid && userCtrl.validate(userCtrl.userTemp) && userCtrl.updateUser(userCtrl.userTemp)"
+                  novalidate>
                 <ul>
                     <li>
                         <fieldset>
                             <label for="name">Name:</label>
-                            <input name="name" type="text" ng-model="user.name" value="//userCtrl.user.name//" />
+                            <input name="name" type="text" ng-model="userCtrl.userTemp.name" />
                         </fieldset>
                     </li>
                     <li>
                         <fieldset>
                             <label for="email">Email:</label>
-                            <input name="email" type="email" ng-model="user.email" value="//userCtrl.user.email//" required>
+                            <input name="email" type="email" ng-model="userCtrl.userTemp.email" required>
                         </fieldset>
                     </li>
                 </ul>
-                <div ng-show="userDetailsForm.$invalid">Invalid Form</div>
+                <input type="submit" value="Update"/>
             </form>
         </div>
     </div>

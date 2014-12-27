@@ -4,28 +4,64 @@
 var crypto  = require('crypto');
 var nano    = require('nano')('http://localhost:5984');
 var express = require('express');
+var extend  = require('node.extend');
+var http    = require('http');
 
-var db  = nano.use("propmgt");
-var md5 = crypto.createHash('md5');
+var db      = nano.use("propmgt");
+var md5     = crypto.createHash('md5');
 
-var UserModel = {
-    "model" : "User",
-    "name" : null,
-    "password" : null,
-    "role": null,
-    "loggedIn" : false
-};
+//promise library
+var qPromise = require("q");
+
+//load the shared model
+var UserModel = require('./shared/user.js');
+
 
 var UserModelExt = {
-    "error":false,
-    "message":null
-};
+    model : {
+        "role" : "USER",
+        "model": "USER",
+        "password" : null
+    }
+}
 
-var User = {
-    create : function(){
-        var user = new UserModel;
-        var ext = new UserModelExt;
-        return {"User":user,"Ext":ext};
+var User = extend({},UserModel,UserModelExt,
+    {
+    insert : function(user, req){
+        var deferred = qPromise.defer();
+
+        if(!req.session || !req.session.user || !this.validate(req.session.user)){
+            deferred.reject(401);
+            return deferred.promise;
+        }
+
+        if(!UserModel.validate(user)){
+            deferred.reject(400);
+            return deferred.promise;
+        }
+
+        //verify the user updating is the same user
+        if(user._id === req.session.user._id || req.session.user.role === "ADMIN"){
+            db.insert(user, null, function (error, info) {
+                if(error){
+                    console.log("_ERROR_",error);
+                    deferred.reject(500);
+                }else{
+                    if(info && info.ok){
+                        user._rev = info.rev;
+                        req.session.user = user;
+                        deferred.resolve(user);
+                    }else{
+                        deferred.reject(500);
+                    }
+                }
+            });
+
+        }else{
+            deferred.reject(401);
+        }
+
+        return deferred.promise;
     },
     findById : function(id, callback){
         done(err, user);
@@ -48,9 +84,7 @@ var User = {
             console.log(body);
             if(body.rows.length > 0 && crypto.createHash('md5').update(pass).digest("hex") === body.rows[0].value.password){
                 request.session.loggedIn = true;
-                request.session.name = body.rows[0].value.name;
-                request.session.email = body.rows[0].value.email;
-                request.session.role = body.rows[0].value.role;
+                request.session.user = body.rows[0].value;
                 return callback(body, null);
             }
 
@@ -60,8 +94,13 @@ var User = {
     },
     loggedIn : function(req){
         req.session.loggedIn;
+    },
+    getBySession : function(req){
+        if(User.loggedIn(req)){
+            return req.session.user;
+        }
+        return null;
     }
-};
-
+});
 
 module.exports = User;

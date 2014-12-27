@@ -7,10 +7,10 @@ a {
   color: #00B7FF;
 }
 
-.css-form input.ng-invalid.ng-dirty {
-    background-color: #FA787E;
+.css-form input.ng-invalid {
+    border-color: #FA787E;
 }
 
-.css-form input.ng-valid.ng-dirty {
-    background-color: #78FA89;
+.css-form input.ng-valid {
+    border-color: #78FA89;
 }

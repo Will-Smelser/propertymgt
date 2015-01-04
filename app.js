@@ -13,12 +13,10 @@ var User            = require('./models/user');
 var routes      = require('./routes/index');
 var users       = require('./routes/user');
 var protect     = require('./routes/protect');
+var property    = require('./routes/property');
 
 var app = express();
 
-// view engine setup
-//app.set('views', path.join(__dirname, 'views'));
-//app.set('view engine', 'mustache');
 
 app.engine('handlebars', handlebars({
     defaultLayout: 'main',

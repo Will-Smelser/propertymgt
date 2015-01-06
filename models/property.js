@@ -38,42 +38,40 @@ query.find.register(propNameType)
 */
 
 var model = {
-    PropName        : {type:[orm.types.String,"Test Property"], view:[orm.views.Input]},
-    PropAddrLine1   : {type:[orm.types.String,"Some line 1"], view:[orm.views.Input,{pattern:"[\w]+"}]},
-    PropAddrLine2   : {type:[orm.types.String,"Some line 2"], view:[orm.views.Input]},
-    PropCity        : {type:[orm.types.String,"City"], view:[orm.views.Input]},
-    PropState       : {type:[orm.types.String,"State"], view:[orm.views.Input]},
-    PropZip         : {type:[orm.types.String,"Zip"], view:[orm.views.Input]}
+    PropName        : {type:[orm.types.String,"Default Property Name"], view:[orm.views.Input]},
+    PropAddrLine1   : {type:[orm.types.String], view:[orm.views.Input,{pattern:"[\w]+"}]},
+    PropAddrLine2   : {type:[orm.types.String], view:[orm.views.Input]},
+    PropCity        : {type:[orm.types.String], view:[orm.views.Input]},
+    PropState       : {type:[orm.types.String], view:[orm.views.SelectBoxState]},
+    PropZip         : {type:[orm.types.String], view:[orm.views.Input,{pattern:"[\d]+"}]}
 };
 
 var schema = new orm.Schema("Property",model);
 var query = new orm.Query(db,schema);
-//query.find.register(schema.getField("PropName"));
+query.find.register(schema.getField("PropName")).then(function(){
+    query.find.by.PropName("Home")
+        .then(function(schemas){
+            var temp = schemas.shift();
+            console.log(temp.serialize());
+            //console.log(orm.create(schema,temp).serialize());
+        }).fail(function(err){
+            console.log(err);
+        });
+});
 
-var obj = schema.clone();
-console.log(schema.serialize());
+//var obj = schema.clone();
+//console.log(schema.serialize());
 
-obj.setType(new orm.types.String("PropName",["Update Name"]));
-console.log(obj.serialize());
+//obj.setType(new orm.types.String("PropName",["Update Name"]));
+//console.log(obj.serialize());
 
-var test = { name: 'Property', data:[
-    { type: 'String', value: 'line1', id: 'PropName' },
-    { type: 'String', value: 'line2', id: 'PropAddrLine1' },
-    //{ type: 'String', value: 'line3', id: 'PropAddrLine2' },
-    { type: 'String', value: 'line4', id: 'PropCity' },
-    { type: 'String', value: '', id: 'PropState' },
-    { type: 'String', value: 'Zip', id: 'PropZip' }
-]};
-var schema2 = orm.create(schema,test);
-console.log(schema2.serialize());
 
-/*
-query.find.by.PropName("Home")
-    .then(function(schemas){
-        for(var x in schemas)
-            console.log(schemas[x].serialize());
-    });
-*/
+//var schema2 = orm.create(schema,test);
+//console.log(schema2.serialize());
+
+
+
+
 //console.log(schema.serialize());
 
 //console.log(schema.getField("PropAddrLine1").view.toString());

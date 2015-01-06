@@ -153,24 +153,22 @@ var ORM = {
         return this;
     },
     types: {
-        String: function (id, args) {
-            var value = null;
-            if (args !== null && typeof args !== "undefined" && typeof args.length != "undefined" && args.length > 0)
-                value = args[0];
-
+        String: function (id, value) {
+            this.value = null;
             this._class = "types";
             this.type = "String";
-            this.value = value;
             this.id = id;
-            var self = this;
+
+            if(typeof value !== "undefined")
+                this.value = value;
 
             this.serialize = function () {
-                return {type: "String", value: self.value, id: self.id};
+                return {type: "String", value: this.value, id: this.id};
             };
 
             this.deserialize = function (serialized) {
-                self.value = serialized.value;
-                self.id = serialized.id;
+                this.value = serialized.value;
+                this.id = serialized.id;
             };
             return this;
         }
@@ -180,18 +178,13 @@ var ORM = {
             this._class = "views";
             this.type = "Input";
             this.name = cssClassName;
-            var self = this;
 
             this.serialize = function () {
-                return {type: "Input", name: self.name};
+                return {type: "Input", name: this.name};
             };
-
             this.deserialize = function (serialized) {
-                self.name = serialized.name;
+                this.name = serialized.name;
             };
-            this.dom = function () {
-                return document.createElement("input").setAttribute("class", cssClassName);
-            }
             this.toString = function () {
                 console.log(attributes);
                 var result = '<input type="text" class="' + cssClassName + '" ';
@@ -201,7 +194,60 @@ var ORM = {
                 return result + " />";
             }
             return this;
+        },
+        SelectBoxState : function(name, attributes, key){
+            var options = ['AK','AL','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+
+            this._class = "views";
+            this.type = "SelectBoxState";
+            this.key = key;
+            this.select = ORM.views.SelectBox(name,attributes,options,key);
+            this.serialize = function(){
+                var temp = this.select.serialize();
+                temp.type = this.type;
+                return temp;
+            }
+            this.deserialize = this.select.deserialize;
+            this.toString = this.select.toString;
+
+        },
+        SelectBox : function(name, attributes, options, key){
+            this._class = "views";
+            this.type = "SelectBox";
+            this.name = name;
+            this.options = options;
+            this.key = key;
+
+            this.serialize = function(){
+                return {type:"SelectBox",name: this.name, options: this.options, key: this.key};
+            };
+            this.deserialize = function(serialized){
+                this.name = serialized.name;
+                this.options = serialized.options;
+                this.key = serialized.key;
+            };
+            this.toString = function(){
+                var str = '<select class="'+name+'"';
+                for (var x in attributes)
+                    str += x + '="' + attributes[x] + '" ';
+                str+='>';
+
+                for(var x in options){
+                    var key = (typeof x === "number")?options[x]:x;
+                    var selected = (key === this.key)?"selected":"";
+                    str += '<option value="'+key+'" '+selected+'>'+options[x]+'</option>';
+                }
+                str+="</select>"
+            }
+            return this;
         }
+    },
+    _construct : function(constructor, args) {
+        function F() {
+            return constructor.apply(this, args);
+        }
+        F.prototype = constructor.prototype;
+        return new F();
     },
     /**
      * Clones a schema and then takes the json data
@@ -234,13 +280,15 @@ var ORM = {
                 var others = [];
 
                 for(var x in config[name]){
-                    var args = config[name][x].slice(1);
+                    var args = [name].concat(config[name][x].slice(1));
                     var obj = config[name][x][0];
 
                     if(x === "type"){
-                        type = new obj(name,args);
+                        type = ORM._construct(obj,args);
+                        //type = new obj(name,args);
                     }else{
-                        others.push(new obj(name,args));
+                        //others.push(new obj(name,args));
+                        others.push(ORM._construct(obj,args));
                     }
                 }
 

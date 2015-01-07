@@ -38,38 +38,44 @@ query.find.register(propNameType)
 */
 
 var model = {
-    PropName        : {type:[orm.types.String,"Default Property Name"], view:[orm.views.Input]},
-    PropAddrLine1   : {type:[orm.types.String], view:[orm.views.Input,{pattern:"[\w]+"}]},
-    PropAddrLine2   : {type:[orm.types.String], view:[orm.views.Input]},
-    PropCity        : {type:[orm.types.String], view:[orm.views.Input]},
-    PropState       : {type:[orm.types.String], view:[orm.views.SelectBoxState]},
-    PropZip         : {type:[orm.types.String], view:[orm.views.Input,{pattern:"[\d]+"}]}
+    PropName        : {Type:[orm.types.String,"Default Property Name"], View:[orm.views.Input]},
+    PropAddrLine1   : {Type:[orm.types.String], View:[orm.views.Input,{pattern:"[\w]+"}]},
+    PropAddrLine2   : {Type:[orm.types.String], View:[orm.views.Input]},
+    PropCity        : {Type:[orm.types.String], View:[orm.views.Input]},
+    PropState       : {Type:[orm.types.String], View:[orm.views.SelectBoxState]},
+    PropZip         : {Type:[orm.types.String], View:[orm.views.Input,{pattern:"[\d]+"}]}
 };
 
+
+
 var schema = new orm.Schema("Property",model);
+
+
 var query = new orm.Query(db,schema);
+
 query.find.register(schema.getField("PropName")).then(function(){
+
     query.find.by.PropName("Home")
         .then(function(schemas){
             var temp = schemas.shift();
-            console.log(temp.serialize());
-            //console.log(orm.create(schema,temp).serialize());
+            //console.log(temp.serialize());
         }).fail(function(err){
             console.log(err);
         });
+
 });
 
-//var obj = schema.clone();
+var obj = schema.clone();
 //console.log(schema.serialize());
 
-//obj.setType(new orm.types.String("PropName",["Update Name"]));
-//console.log(obj.serialize());
+obj.setType(new orm.types.String("PropCity","City Name"));
+console.log(obj.serialize());
 
 
 //var schema2 = orm.create(schema,test);
 //console.log(schema2.serialize());
 
-
+console.log(schema.getField("PropCity").getView());
 
 
 //console.log(schema.serialize());

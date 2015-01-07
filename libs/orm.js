@@ -139,6 +139,14 @@ var ORM = {
         this.type = type;
         this.others = others;
 
+        //add a bunch of getters for others
+        for (var x in this.others) {
+            //console.log(this.others.length,"adding method","get"+this.others[x].name);
+            this["get" + this.others[x].name] = function () {
+                return this.others[x];
+            }
+        }
+
         var self = this;
         this.serialize = function () {
             var result = {};
@@ -153,41 +161,45 @@ var ORM = {
         return this;
     },
     types: {
-        String: function (id, value) {
+        String: function (id, name, value) {
             this.value = null;
             this._class = "types";
             this.type = "String";
+            this.name = name;
             this.id = id;
 
-            if(typeof value !== "undefined")
+            if (typeof value !== "undefined")
                 this.value = value;
 
             this.serialize = function () {
-                return {type: "String", value: this.value, id: this.id};
+                return {type: "String", value: this.value, id: this.id, name: this.name};
             };
 
             this.deserialize = function (serialized) {
                 this.value = serialized.value;
                 this.id = serialized.id;
+                this.name = serialized.name;
             };
             return this;
         }
     },
     views: {
-        Input: function (cssClassName, attributes) {
+        Input: function (id, name, attributes) {
             this._class = "views";
             this.type = "Input";
-            this.name = cssClassName;
+            this.id = id;
+            this.name = name;
 
             this.serialize = function () {
-                return {type: "Input", name: this.name};
+                return {type: "Input", id: this.id, name: this.name};
             };
             this.deserialize = function (serialized) {
+                this.id = serialized.id;
                 this.name = serialized.name;
             };
             this.toString = function () {
                 console.log(attributes);
-                var result = '<input type="text" class="' + cssClassName + '" ';
+                var result = '<input type="text" class="' + this.id + '" ';
                 for (var x in attributes) {
                     result += x + '="' + attributes[x] + '" ';
                 }
@@ -195,57 +207,74 @@ var ORM = {
             }
             return this;
         },
-        SelectBoxState : function(name, attributes, key){
-            var options = ['AK','AL','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+        SelectBoxState: function (id, name, attributes, key) {
+            var options = ['AK', 'AL', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 
             this._class = "views";
             this.type = "SelectBoxState";
+            this.id = id;
+            this.name = name;
             this.key = key;
-            this.select = ORM.views.SelectBox(name,attributes,options,key);
-            this.serialize = function(){
+
+            var self = this;
+
+            this.select = new ORM.views.SelectBox(id, name, attributes, options, key);
+            this.serialize = function () {
                 var temp = this.select.serialize();
                 temp.type = this.type;
                 return temp;
             }
-            this.deserialize = this.select.deserialize;
+
+            //need to fix this, pretty sloppy
+            this.deserialize = function (serialized) {
+                self.id = serialized.id;
+                self.name = serialized.name;
+                self.key = serialized.key;
+                this.select.id = this.id;
+                this.select.name = this.name;
+                this.select.key = this.key;
+            }
             this.toString = this.select.toString;
 
         },
-        SelectBox : function(name, attributes, options, key){
+        SelectBox: function (id, name, attributes, options, key) {
             this._class = "views";
             this.type = "SelectBox";
+            this.id = id;
             this.name = name;
             this.options = options;
             this.key = key;
 
-            this.serialize = function(){
-                return {type:"SelectBox",name: this.name, options: this.options, key: this.key};
+            this.serialize = function () {
+                return {type: "SelectBox", id: this.id, name: this.name, options: this.options, key: this.key};
             };
-            this.deserialize = function(serialized){
+            this.deserialize = function (serialized) {
+                this.id = serialized.id;
                 this.name = serialized.name;
                 this.options = serialized.options;
                 this.key = serialized.key;
             };
-            this.toString = function(){
-                var str = '<select class="'+name+'"';
+            this.toString = function () {
+                var str = '<select class="' + this.id + '"';
                 for (var x in attributes)
                     str += x + '="' + attributes[x] + '" ';
-                str+='>';
+                str += '>';
 
-                for(var x in options){
-                    var key = (typeof x === "number")?options[x]:x;
-                    var selected = (key === this.key)?"selected":"";
-                    str += '<option value="'+key+'" '+selected+'>'+options[x]+'</option>';
+                for (var x in options) {
+                    var key = (typeof x === "number") ? options[x] : x;
+                    var selected = (key === this.key) ? "selected" : "";
+                    str += '<option value="' + key + '" ' + selected + '>' + options[x] + '</option>';
                 }
-                str+="</select>"
+                str += "</select>"
             }
             return this;
         }
     },
-    _construct : function(constructor, args) {
+    _construct: function (constructor, args) {
         function F() {
             return constructor.apply(this, args);
         }
+
         F.prototype = constructor.prototype;
         return new F();
     },
@@ -260,18 +289,21 @@ var ORM = {
 
         var newSchema = schema.clone();
 
-        for(var x in data.data){
-            var type = new ORM.types[data.data[x].type](data.data[x].id);
+
+        for (var x in data.data) {
+            var type = new ORM.types[data.data[x].type](data.data[x].id, data.data[x].name);
             type.deserialize(data.data[x])
             newSchema.setType(type);
         }
 
         return newSchema;
+
     },
     Schema: function (name, config) {
         var self = this;
         this.name = name;
         this.fields = [];
+        var result = {};
 
         //fill the fields from a config object
         if (typeof config === "object") {
@@ -279,72 +311,74 @@ var ORM = {
                 var type = null;
                 var others = [];
 
-                for(var x in config[name]){
-                    var args = [name].concat(config[name][x].slice(1));
+                for (var x in config[name]) {
+                    var args = [name, x].concat(config[name][x].slice(1));
                     var obj = config[name][x][0];
 
-                    if(x === "type"){
-                        type = ORM._construct(obj,args);
+                    if (x.toLowerCase() === "type") {
+                        type = ORM._construct(obj, args);
                         //type = new obj(name,args);
-                    }else{
+                    } else {
                         //others.push(new obj(name,args));
-                        others.push(ORM._construct(obj,args));
+                        others.push(ORM._construct(obj, args));
                     }
+                    result["set"+x] = function(args){
+                        var type = ORM._construct(ORM._construct(obj,args))
+                    };
                 }
-
                 self.fields.push(new ORM.Field(type, others));
             }
         }
 
-        return {
-            setType : function(type){
-                var temp = null;
+        result.setType = function (type) {
+            var temp = null;
 
-                var x = null;
-                for (x in self.fields)
-                    if (self.fields[x].type.id === type.id)
-                        break;
+            var x = null;
+            for (x in self.fields)
+                if (self.fields[x].type.id === type.id)
+                    break;
 
-                if(x === null) console.log("setType failed.  Could not find type ("+type.id+") in Schema.")
+            if (x === null) console.log("setType failed.  Could not find type (" + type.id + ") in Schema.")
 
-                self.fields[x].type = type;
-            },
-            getName: function () {
-                return self.name;
-            },
-            getField: function (typeId) {
-                for (var x in self.fields) {
-                    if (self.fields[x].type.id === typeId) {
-                        return self.fields[x];
-                    }
+            self.fields[x].type = type;
+        };
+        result.getName = function () {
+            return self.name;
+        };
+        result.getField = function (typeId) {
+            for (var x in self.fields) {
+                if (self.fields[x].type.id === typeId) {
+                    return self.fields[x];
                 }
-            },
-            add: function (field) {
-                self.fields.push(field);
-            },
-            serialize: function () {
-                var result = [];
-                for (var x in self.fields) {
-                    result.push(self.fields[x].type.serialize())
-                }
-                return {
-                    name: self.name,
-                    data: result
-                };
-            },
-            clone : function(){
-                var name = self.name;
-                var schema = new ORM.Schema(name);
-                for(var x in self.fields){
-                    schema.add(ORM.deserialize(self.fields[x].serialize()));
-                }
-                return schema;
-            },
-            each: function (func) {
-                for (var x in self.fields)
-                    func(x, self.fields[x]);
             }
         };
+        result.add = function (field) {
+            self.fields.push(field);
+        };
+        result.serialize = function () {
+            var result = [];
+            for (var x in self.fields) {
+                result.push(self.fields[x].type.serialize())
+            }
+            return {
+                name: self.name,
+                data: result
+            };
+        };
+        result.clone = function () {
+            var name = self.name;
+            var schema = new ORM.Schema(name);
+
+            for (var x in self.fields) {
+                schema.add(ORM.deserialize(self.fields[x].serialize()));
+            }
+            return schema;
+        };
+        result.each = function (func) {
+            for (var x in self.fields)
+                func(x, self.fields[x]);
+        };
+        return result;
     }
 };
 

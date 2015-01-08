@@ -66,12 +66,12 @@ query.find.register(schema.getField("PropName")).then(function(){
 });
 
 var obj = schema.clone();
-console.log(obj.serialize());
+//console.log(obj.serialize());
 //console.log(schema.serialize());
 
 //obj.setType(new orm.types.String("PropCity", "Type","City Name"));
-//obj.setPropAddrLine1("Some addr line");
-//console.log(obj.serialize());
+obj.setPropAddrLine1("Some addr line");
+console.log(obj.serialize());
 
 //var schema2 = orm.create(schema,test);
 //console.log(schema2.serialize());

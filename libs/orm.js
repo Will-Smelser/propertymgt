@@ -120,6 +120,7 @@ var ORM = {
     deserialize: function (serialized) {
         var type = null;
         var others = [];
+        
         for (var x in serialized) {
 
             var temp = new ORM[x][serialized[x].type]();
@@ -162,30 +163,31 @@ var ORM = {
     },
     types: {
         String: function (value) {
+            //static values
             this._class = "types";
             this.type = "String";
 
-            //need to be set by user
-            this.serializeValues = {
-                name  : null, //
-                id    : null, //unique id for each field in a schema
-                value : null  //value for this type set by user
-            }
+            //set by user/model
             this.value = null;
             this.name = null; //unique name within a Field
             this.id = null;   //unique id for Field
+
+            //members that should be serialized
+            this.svals = ["type","id","name","value"];
 
             if (typeof value !== "undefined")
                 this.value = value;
 
             this.serialize = function () {
-                return {type: this.type, value: this.value, id: this.id, name: this.name};
+                var result = {};
+                for(var x in this.svals)
+                    result[this.svals[x]] = this[this.svals[x]];
+                return result;
             };
 
             this.deserialize = function (serialized) {
-                this.value = serialized.value;
-                this.id = serialized.id;
-                this.name = serialized.name;
+                for(var x in this.svals)
+                    this[this.svals[x]] = (typeof serialized[this.svals[x]] !== "undefined")?serialized[this.svals[x]]:null;
             };
 
             return this;
@@ -206,7 +208,7 @@ var ORM = {
                 this.name = serialized.name;
             };
             this.toString = function () {
-                console.log(attributes);
+                //console.log(attributes);
                 var result = '<input type="text" class="' + this.id + '" ';
                 for (var x in attributes) {
                     result += x + '="' + attributes[x] + '" ';

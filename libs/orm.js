@@ -87,11 +87,11 @@ var Query = function (nanoDb, schema) {
             });
 
         //even if things failed we register this function
-        self.find.by[type.id] = function (value) {
+        self.find.by[type.id] = function (id) {
             var deferred2 = Q.defer();
             if (!ready) console.log("Query.find.by." + type.id + " before ready.");
 
-            nanoDb.view(schema.getName(), 'by' + type.id, {key: value}, function (err, body2) {
+            nanoDb.view(schema.getName(), 'by' + type.id, {key: id}, function (err, body2) {
                 if (err)
                     deferred2.reject(err);
                 else {
@@ -122,12 +122,12 @@ var ORM = {
         var others = [];
         for (var x in serialized) {
 
-            var temp = new ORM[x][serialized[x].type](null, null, null, null);
+            var temp = new ORM[x][serialized[x].type]();
             temp.deserialize(serialized[x]);
 
-            if (x === "types")
+            if (x.toLocaleLowerCase() === "types"){
                 type = temp;
-            else
+            }else
                 others.push(temp);
         }
         return new ORM.Field(type, others);
@@ -161,18 +161,25 @@ var ORM = {
         return this;
     },
     types: {
-        String: function (id, name, value) {
-            this.value = null;
+        String: function (value) {
             this._class = "types";
             this.type = "String";
-            this.name = name;
-            this.id = id;
+
+            //need to be set by user
+            this.serializeValues = {
+                name  : null, //
+                id    : null, //unique id for each field in a schema
+                value : null  //value for this type set by user
+            }
+            this.value = null;
+            this.name = null; //unique name within a Field
+            this.id = null;   //unique id for Field
 
             if (typeof value !== "undefined")
                 this.value = value;
 
             this.serialize = function () {
-                return {type: "String", value: this.value, id: this.id, name: this.name};
+                return {type: this.type, value: this.value, id: this.id, name: this.name};
             };
 
             this.deserialize = function (serialized) {
@@ -180,6 +187,7 @@ var ORM = {
                 this.id = serialized.id;
                 this.name = serialized.name;
             };
+
             return this;
         }
     },
@@ -289,10 +297,16 @@ var ORM = {
 
         var newSchema = schema.clone();
 
-
+        //go through the data
         for (var x in data.data) {
-            var type = new ORM.types[data.data[x].type](data.data[x].id, data.data[x].name);
-            type.deserialize(data.data[x])
+            //lookup the field by the id
+            var field = schema.getField(data.data[x].id);
+
+            //create a new type using the given id
+            var type = new ORM.types[data.data[x].type](data.data[x].id);
+            type.deserialize(data.data[x]);
+            type.id = field.type.id;
+            type.name = field.type.name;
             newSchema.setType(type);
         }
 
@@ -303,28 +317,33 @@ var ORM = {
         var self = this;
         this.name = name;
         this.fields = [];
+
+        //the public schema object we return
         var result = {};
 
         //fill the fields from a config object
         if (typeof config === "object") {
-            for (var name in config) {
+            for (var id in config) {
                 var type = null;
                 var others = [];
 
-                for (var x in config[name]) {
-                    var args = [name, x].concat(config[name][x].slice(1));
-                    var obj = config[name][x][0];
+                for (var name in config[id]) {
+                    var args = config[id][name].slice(1);
+                    var obj = config[id][name][0];
 
-                    if (x.toLowerCase() === "type") {
+                    if (name.toLowerCase() === "type") {
                         type = ORM._construct(obj, args);
-                        //type = new obj(name,args);
+                        type.name = name;
+                        type.id = id;
+
+                        //need to create the setter for this unique id
+                        result["set"+id] = function(){
+                            var args2 = Array.prototype.slice.call(arguments);
+                            this.setType(ORM._construct(obj,args2));
+                        };
                     } else {
-                        //others.push(new obj(name,args));
                         others.push(ORM._construct(obj, args));
                     }
-                    result["set"+x] = function(args){
-                        var type = ORM._construct(ORM._construct(obj,args))
-                    };
                 }
                 self.fields.push(new ORM.Field(type, others));
             }
@@ -354,6 +373,14 @@ var ORM = {
         };
         result.add = function (field) {
             self.fields.push(field);
+            this["set"+field.type.id] = function(){
+                var args = Array.prototype.slice.call(arguments);
+
+                var type = ORM._construct(ORM.types[field.type.type],args);
+                type.name = field.type.name;
+                type.id = field.type.id;
+                this.setType(type);
+            };
         };
         result.serialize = function () {
             var result = [];

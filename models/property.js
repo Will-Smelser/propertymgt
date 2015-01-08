@@ -58,7 +58,7 @@ query.find.register(schema.getField("PropName")).then(function(){
     query.find.by.PropName("Home")
         .then(function(schemas){
             var temp = schemas.shift();
-            //console.log(temp.serialize());
+            console.log(temp.serialize());
         }).fail(function(err){
             console.log(err);
         });
@@ -66,16 +66,17 @@ query.find.register(schema.getField("PropName")).then(function(){
 });
 
 var obj = schema.clone();
+console.log(obj.serialize());
 //console.log(schema.serialize());
 
-obj.setType(new orm.types.String("PropCity","City Name"));
-console.log(obj.serialize());
-
+//obj.setType(new orm.types.String("PropCity", "Type","City Name"));
+//obj.setPropAddrLine1("Some addr line");
+//console.log(obj.serialize());
 
 //var schema2 = orm.create(schema,test);
 //console.log(schema2.serialize());
 
-console.log(schema.getField("PropCity").getView());
+//console.log(schema.getField("PropCity").getView());
 
 
 //console.log(schema.serialize());

@@ -120,7 +120,7 @@ var ORM = {
     deserialize: function (serialized) {
         var type = null;
         var others = [];
-        
+
         for (var x in serialized) {
 
             var temp = new ORM[x][serialized[x].type]();
@@ -148,6 +148,10 @@ var ORM = {
             }
         }
 
+        this.getType = function(){
+            return this.type;
+        };
+
         var self = this;
         this.serialize = function () {
             var result = {};
@@ -166,11 +170,11 @@ var ORM = {
             //static values
             this._class = "types";
             this.type = "String";
+            this.id   = "Type";
 
             //set by user/model
             this.value = null;
             this.name = null; //unique name within a Field
-            this.id = null;   //unique id for Field
 
             //members that should be serialized
             this.svals = ["type","id","name","value"];

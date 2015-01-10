@@ -2,7 +2,7 @@
 
 var nano    = require('nano')('http://localhost:5984');
 var db      = nano.use("propmgt");
-var orm     = require('../libs/orm');
+var orm     = require('../libs/orm2');
 /*
 //promise library
 var qPromise = require("q");
@@ -36,7 +36,7 @@ query.find.register(propNameType)
             });
     });
 */
-
+/*
 var model = {
     PropName        : {Type:[orm.types.String,"Default Property Name"], View:[orm.views.Input]},
     PropAddrLine1   : {Type:[orm.types.String], View:[orm.views.Input,{pattern:"[\w]+"}]},
@@ -90,6 +90,25 @@ console.log(field.serialize());
 var field2 = new orm.deserialize(field.serialize());
 console.log(field2.serialize());
 */
+
+var schema = orm.Schema("test");
+var field = new orm.Field("TestField",new orm.types.String("hello"));
+schema.addField(field);
+
+console.log(schema.serialize().data[0].value);
+
+schema.getField("TestField").setType(new orm.types.String("world"));
+console.log(schema.serialize().data[0].value);
+
+var clone = schema.clone();
+clone.getField("TestField").setType(new orm.types.String("Hello World"));
+console.log(clone.serialize().data[0].value);
+
+//schema.deserialize(schema.serialize());
+
+//console.log(schema.getField("TestField").getType().serialize());
+
+
 var PropertyModel = {
     model : {
         model:"PROPERTY",

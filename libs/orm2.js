@@ -16,7 +16,15 @@ var Query = function (nanoDb, schema) {
         return deferred.promise;
     };
 
-    this._createView = function (schema, fieldId) {
+    /**
+     *
+     * @param schema The schema/document to save
+     * @param fieldId The id for the field
+     * @param idx The index of the value to search on
+     * @returns {promise|defer.promise|Q.promise|fd.g.promise|qFactory.Deferred.promise}
+     * @private
+     */
+    this._createView = function (schema, fieldId, idx) {
         var deferred = Q.defer();
 
         //create the syntax for creating a view
@@ -59,11 +67,14 @@ var Query = function (nanoDb, schema) {
     this.insert = function (schemaObj) {
         var deferred = Q.defer();
         var serialized = schemaObj.serialize();
+
         nanoDb.insert(serialized, null, function (err, body) {
             if (err)
                 deferred.reject(err);
-            else
+            else{
+                schemaObj._rev = body.rev;
                 deferred.resolve(body);
+            }
         });
         return deferred.promise;
     }
@@ -73,6 +84,14 @@ var Query = function (nanoDb, schema) {
     }
 
     var self = this;
+
+    /**
+     * Register a search view.  This will take the field and call field.getType() and
+     * create this.find.by[field.getType().id] = function(){};  The arguments passed into
+     * this function should be the same arguments used to create Type you are search
+     * @param field
+     * @returns {promise|defer.promise|Q.promise|fd.g.promise|qFactory.Deferred.promise}
+     */
     this.find.register = function (field) {
         var type = field.getType();
         var deferred = Q.defer();
@@ -88,20 +107,30 @@ var Query = function (nanoDb, schema) {
                 deferred.reject(err);
             });
 
-        //even if things failed we register this function
-        self.find.by[field.id] = function (id) {
+        /**
+         * Even if things failed we register this function.
+         * Parameters should match the ORM.types.Type's arguments.  It will create the Type object
+         * and then search the database for the serialized value of type.
+         * @returns {promise|defer.promise|Q.promise|fd.g.promise|qFactory.Deferred.promise}
+         */
+        self.find.by[field.id] = function () {
+            var args = Array.prototype.slice.call(arguments);
+            var value = ORM._construct(ORM.types[field.getType().type],args).serialize().value;
+
 
             var deferred2 = Q.defer();
             if (!ready) console.log("Query.find.by." + field.id + " before ready.");
 
-            nanoDb.view(schema.getName(), 'by' + field.id, {key: id}, function (err, body2) {
-                console.log(body2.rows[0].value);
+            nanoDb.view(schema.getName(), 'by' + field.id, {key: value}, function (err, body2) {
                 if (err)
                     deferred2.reject(err);
                 else {
                     var result = [];
                     for (var x in body2.rows) {
-                        result.push(schema.clone().deserialize(body2.rows[x].value));
+                        var doc = schema.clone().deserialize(body2.rows[x].value);
+                        doc._rev = body2.rows[x].value._rev;
+                        doc._id  = body2.rows[x].value._id;
+                        result.push(doc);
                     }
                     deferred2.resolve(result);
                 }
@@ -117,7 +146,7 @@ var Query = function (nanoDb, schema) {
 var ORM = {
     "Query": Query,
 
-    Field: function (id, obj1, obj2, objx) {
+    Field: function (id, obj1, obj2, objN) {
         this.id = id;
         this.objs = Array.prototype.slice.call(arguments).slice(1);
 
@@ -144,6 +173,25 @@ var ORM = {
             this.clazz = "types";
             this.type = "String";
             this.value = value;
+            this.id = "Type";
+
+            /**
+             * types are unique in they use the field id for id
+             * @returns {{type: *, value: *[]}}
+             */
+            this.serialize = function(id){
+                return {id:id,type:this.type,value:[this.value]};
+            }
+            this.deserialize = function(serialized){
+                return ORM._construct(ORM.types.String,serialized.value);
+            }
+
+            return this;
+        },
+        Array: function(arg1, arg2, argN){
+            this.clazz = "types";
+            this.type = "Array";
+            this.value = Array.prototype.slice.call(arguments);
             this.id = "Type";
 
             /**
@@ -219,10 +267,14 @@ var ORM = {
                 result.push(type);
             }
 
-            return {
-                name: self.name,
-                data: result
-            };
+            //so we can make updates in couch, need to always set the _rev number
+            var rtn = { name: self.name, data: result};
+            if(typeof this._rev !== "undefined"){
+                rtn._rev = this._rev;
+                rtn._id = this._id;
+            }
+
+            return rtn;
         };
         result.deserialize = function(serialized){
             self.name = serialized.name;
@@ -237,6 +289,12 @@ var ORM = {
             }
             return this;
         };
+
+        /**
+         * Make a clone of the current schema.  This does not include a "_rev" values, so
+         * if you run an insert in couch from a clone you will end up with a new document in the database
+         * @returns {ORM.Schema}
+         */
         result.clone = function () {
             var name = this.getName();
             var schema = new ORM.Schema(name);

@@ -91,18 +91,62 @@ var field2 = new orm.deserialize(field.serialize());
 console.log(field2.serialize());
 */
 
-var schema = orm.Schema("test");
-var field = new orm.Field("TestField",new orm.types.String("hello"));
-schema.addField(field);
+var model = {
+    PropName        : {Type:[orm.types.String,"Default Property Name"]},
+    PropAddrLine1   : {Type:[orm.types.String]},
+    PropAddrLine2   : {Type:[orm.types.String]},
+    PropCity        : {Type:[orm.types.String]},
+    PropState       : {Type:[orm.types.String]},
+    PropZip         : {Type:[orm.types.String]}
+};
 
-console.log(schema.serialize().data[0].value);
+var schema = orm.Schema("Property", model);
+var doc = schema.clone();
 
-schema.getField("TestField").setType(new orm.types.String("world"));
-console.log(schema.serialize().data[0].value);
+console.log(doc.serialize());
+doc.getField("PropName").setType(new orm.types.String("Hello Prop Name"));
 
-var clone = schema.clone();
-clone.getField("TestField").setType(new orm.types.String("Hello World"));
-console.log(clone.serialize().data[0].value);
+//console.log(doc.getField("PropName").getType().serialize("PropName"));
+
+var query = new orm.Query(db,schema);
+
+query.find.register(schema.getField("PropState")).then(function(){
+
+    //query.find.by.PropName("Home")
+    query.find.by.PropState("OH")
+        .then(function(schemas){
+            console.log(">>",schemas.length);
+
+            var temp = schemas.shift();
+            temp.getField("PropName").setType(new orm.types.String("My Home"));
+            //console.log(temp.serialize());
+
+
+            query.insert(temp)
+                .then(function(body){
+                    console.log("INSERT SUCCUSESS",body);
+                })
+                .fail(function(err){
+                    console.log("INSERT FAIL",err);
+                });
+
+        }).fail(function(err){
+            console.log(err);
+        });
+
+});
+
+//var field = new orm.Field("TestField",new orm.types.String("hello"));
+//schema.addField(field);
+
+//console.log(schema.serialize().data[0].value);
+
+//schema.getField("TestField").setType(new orm.types.String("world"));
+//console.log(schema.serialize().data[0].value);
+
+//var clone = schema.clone();
+//clone.getField("TestField").setType(new orm.types.String("Hello World"));
+//console.log(clone.serialize().data[0].value);
 
 //schema.deserialize(schema.serialize());
 

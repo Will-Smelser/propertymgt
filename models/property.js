@@ -2,7 +2,7 @@
 
 var nano    = require('nano')('http://localhost:5984');
 var db      = nano.use("propmgt");
-var orm     = require('../libs/orm2');
+var orm     = require('../libs/orm/orm');
 /*
 //promise library
 var qPromise = require("q");
@@ -92,22 +92,31 @@ console.log(field2.serialize());
 */
 
 var model = {
-    PropName        : {Type:[orm.types.String,"Default Property Name"]},
-    PropAddrLine1   : {Type:[orm.types.String]},
-    PropAddrLine2   : {Type:[orm.types.String]},
-    PropCity        : {Type:[orm.types.String]},
-    PropState       : {Type:[orm.types.String]},
-    PropZip         : {Type:[orm.types.String]}
+    PropName        : {Type:[orm.types.String,"Default Property Name"],View:[orm.views.Input]},
+    PropAddrLine1   : {Type:[orm.types.String],View:[orm.views.Input]},
+    PropAddrLine2   : {Type:[orm.types.String],View:[orm.views.Input]},
+    PropCity        : {Type:[orm.types.String],View:[orm.views.Input]},
+    PropState       : {Type:[orm.types.String],View:[orm.views.Input]},
+    PropZip         : {Type:[orm.types.String],View:[orm.views.Input]}
 };
 
 var schema = orm.Schema("Property", model);
 var doc = schema.clone();
 
-console.log(doc.serialize());
-doc.getField("PropName").setType(new orm.types.String("Hello Prop Name"));
+var template = require("../libs/orm/view");
+template(__dirname+'/../libs/orm/views/skeleton.handlebars',doc,function(html){
+    console.log(html);
+});
 
-//console.log(doc.getField("PropName").getType().serialize("PropName"));
 
+//console.log(doc.getField("PropAddrLine1").getView().serialize());
+
+//console.log(doc.serialize());
+//doc.getField("PropAddrLine1").setType(new orm.types.String("Hello Prop Name"));
+
+//console.log(doc.getField("PropAddrLine1").getView().serialize());
+//console.log("??",doc.getField("PropName").getType().serialize("PropName"));
+/*
 var query = new orm.Query(db,schema);
 
 query.find.register(schema.getField("PropState")).then(function(){
@@ -135,7 +144,7 @@ query.find.register(schema.getField("PropState")).then(function(){
         });
 
 });
-
+*/
 //var field = new orm.Field("TestField",new orm.types.String("hello"));
 //schema.addField(field);
 

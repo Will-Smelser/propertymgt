@@ -72,30 +72,31 @@ var ORM = {
         _clean : function(value){
             return value;
         },
-        Input: function (attributes) {
+        Input: function (name, attributes) {
             this.clazz = "views";
             this.type = "Input";
             this.id = "View";
 
+            this.name = name;
             this.attributes = (typeof attributes === "undefined") ? {} : attributes;
 
             var self = this;
             this.serialize = function(){
+                var attr = " ";
+                for(var x in self.attributes)
+                    attr += x + '="'+self.attributes[x]+'" ';
 
-                var ret = '<input ';
-
-                if(typeof self.attributes.id === "undefined")
-                    ret += 'id='+ORM.views._clean(self._field.id)+'" ';
-                if(typeof self.attributes.class === "undefined")
-                    ret += "class='ORM' "
-
-                for(var attr in self.attributes)
-                    ret += attr + '="' + self._clean(self.attributes[attr])+ '" ';
-
-                return ret + ' value="'+ORM.views._clean(self._field.getType().getValue())+'" />';
+                return {
+                    view : "input.handlebars",
+                    id   : self._field.id,
+                    name : (typeof self.name === "undefined") ? self._field.id : self.name,
+                    attributes : attr,
+                    className : (typeof self.attributes["class"] === "undefined") ? "ORM" : self.attributes["class"],
+                    value : self._field.getType().getValue()
+                };
             }
             this.clone = function(){
-                return new ORM.views.Input(self.attributes);
+                return new ORM.views.Input(self.name,self.attributes);
             }
         }
     },
@@ -195,7 +196,7 @@ var ORM = {
 
         result.each = function(fn){
             for(var x in self.fields)
-                fn(self.fields[x]);
+                fn(self.fields[x],x);
         }
 
         return result;

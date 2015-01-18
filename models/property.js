@@ -92,7 +92,7 @@ console.log(field2.serialize());
 */
 
 var model = {
-    PropName        : {Type:[orm.types.String,"Default Property Name"],View:[orm.views.Input]},
+    PropName        : {Type:[orm.types.String,"Default Property Name"],View:[orm.views.Input,"Name"]},
     PropAddrLine1   : {Type:[orm.types.String],View:[orm.views.Input]},
     PropAddrLine2   : {Type:[orm.types.String],View:[orm.views.Input]},
     PropCity        : {Type:[orm.types.String],View:[orm.views.Input]},
@@ -104,7 +104,7 @@ var schema = orm.Schema("Property", model);
 var doc = schema.clone();
 
 var template = require("../libs/orm/view");
-template(__dirname+'/../libs/orm/views/skeleton.handlebars',doc,function(html){
+template.create(doc,function(html){
     console.log(html);
 });
 

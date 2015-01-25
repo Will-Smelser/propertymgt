@@ -33,7 +33,7 @@ router.post('/create',function(req, res){
             return res.send("Failed to insert. Error: "+err);
         })
         .then(function(body){
-            res.redirect(301,'read/'+body.id);
+            res.redirect(302,'read/'+body.id);
         });
 });
 
@@ -44,7 +44,9 @@ router.get('/read/:id',function(req,res){
             res.send(html);
         });
     }).fail(function(err){
-        console.log(err);
+        req.flash('orm-desc-short','Read '+schema.getName()+' Entry Failed');
+        req.flash('orm-desc-body',err);
+        res.redirect(302,'/'+route+'/failure');
     });
 });
 
@@ -62,6 +64,9 @@ router.get('/update/:id',function(req,res){
         });
     }).fail(function(err){
         console.log(err);
+        req.flash('orm-desc-short','Read '+schema.getName()+' Entry Failed');
+        req.flash('orm-desc-body',err);
+        res.redirect(302,'/'+route+'/failure');
     });
 });
 
@@ -83,7 +88,7 @@ router.post('/update',function(req, res){
             return res.send("Failed to insert. Error: "+err);
         })
         .then(function(body){
-            res.redirect(301,'read/'+body.id);
+            res.redirect(302,'read/'+body.id);
         });
 });
 
@@ -107,31 +112,25 @@ router.get('/delete/:id',function(req,res){
 router.post('/delete',function(req, res){
     query.delete(req.body._id,req.body._rev)
         .fail(function(err){
-            console.log('about to try and redirect failure');
-            res.append('orm-desc-short','Delete '+schema.getName()+' Entry Failed');
-            res.append('orm-desc-body',err);
-            res.redirect(301,'failure');
+            req.flash('orm-desc-short','Delete '+schema.getName()+' Entry Failed');
+            req.flash('orm-desc-body',err);
+            res.redirect(302,'failure');
         })
         .then(function(body){
-            console.log('about to try and redirect success');
-            res.append('orm-desc-short','Deleted  Entry');
-            res.append('orm-desc-body','Your entry was successfully removed.');
-
-            console.log('added headers correctly');
-            res.redirect(301,'success');
+            req.flash('orm-desc-short','Deleted  Entry');
+            req.flash('orm-desc-body','Your entry was successfully removed.');
+            res.redirect(302,'success');
         });
 });
 
 router.get('/success',function(req,res){
-    console.log('called success');
     view.success(schema,route,function(html){
         var tpl = Handlebars.compile(html);
-        console.log(html);
 
         //set values for template replacements
         var ctx = {
-            short:req.get('orm-desc-short'),
-            body:req.get('orm-desc-body')
+            short:new Handlebars.SafeString(req.flash('orm-desc-short')),
+            body :new Handlebars.SafeString(req.flash('orm-desc-body'))
         };
 
         //compile and send templates
@@ -140,17 +139,13 @@ router.get('/success',function(req,res){
 });
 
 router.get('/failure',function(req,res){
-    var ctx = {
-        short:req.get('orm-desc-short'),
-        body:req.get('orm-desc-body')
-    };
     view.failure(schema,route,function(html){
         var tpl = Handlebars.compile(html);
 
         //set values for template replacements
         var ctx = {
-            short:req.get('orm-desc-short'),
-            body:req.get('orm-desc-body')
+            short:new Handlebars.SafeString(req.flash('orm-desc-short')),
+            body :new Handlebars.SafeString(req.flash('orm-desc-body'))
         };
 
         //compile and send templates

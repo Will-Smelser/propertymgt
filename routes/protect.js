@@ -10,14 +10,16 @@ var router = express.Router();
 
 var User = require("../models/user");
 
-var neverProtect = ["/","/user/login","/user/register"];//,"/user/","/user/model","/user/app","/user"];
+var neverProtect = [/.*/];
+    //"/",/\/user\/login/,/\/user\/register/,"/propmgmt",
+    //"/propmgmt/create","/propmgmt/user","/propmgmt/usercreate","/propmgmt/view"];//,"/user/","/user/model","/user/app","/user"];
 
 /* GET home page. */
 router.all('*', function(req, res, next) {
     console.log("Called protect");
 
     for(var x in neverProtect){
-        if(req.url === neverProtect[x])
+        if(neverProtect[x].test(req.url))
             return next();
     }
 

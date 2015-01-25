@@ -1,9 +1,6 @@
 'use strict';
 
-var Query  = require('./query');
-
 var ORM = {
-    "Query": Query,
 
     Field: function (id, obj1, obj2, objN) {
         this.id = id;
@@ -62,7 +59,10 @@ var ORM = {
                 return new ORM.types.String(value);
             }
             this.getValue = function(){
-                return this.value;
+                return [this.value];
+            }
+            this.setValue = function(value){
+                this.value = value;
             }
 
             return this;
@@ -87,7 +87,11 @@ var ORM = {
                     attr += x + '="'+self.attributes[x]+'" ';
 
                 return {
-                    view : "input.handlebars",
+                    create : "input.handlebars",
+                    read : "string.handlebars", //read view
+                    update : "input.handlebars",
+                    delete : "string.handlebars",
+
                     id   : self._field.id,
                     name : (typeof self.name === "undefined") ? self._field.id : self.name,
                     attributes : attr,
@@ -151,7 +155,7 @@ var ORM = {
 
             //so we can make updates in couch, need to always set the _rev number
             var rtn = { name: self.name, data: result};
-            if(typeof this._rev !== "undefined"){
+            if(this._id){
                 rtn._rev = this._rev;
                 rtn._id = this._id;
             }
@@ -160,6 +164,12 @@ var ORM = {
         };
         result.deserialize = function(serialized){
             self.name = serialized.name;
+
+            //deserialized from couch?
+            if(serialized._id){
+                this._id = serialized._id;
+                this._rev = serialized._rev;
+            }
 
             //iterate over the serialized data
             for(var x in serialized.data){

@@ -1,0 +1,21 @@
+<html>
+{{head}}
+<h1>{{title}}</h1>
+<div class=""
+<div class="row">
+    <div class="col-md-2">
+        {{nav}}
+    </div>
+    <div class="col-md-10">
+        <form action="{{action}}" method="post" class="form-horizontal">
+            <input type="hidden" name="_id" value="[[_id]]" />
+            <input type="hidden" name="_rev" value="[[_rev]]" />
+            {{#each viewElements}}
+                {{this}}
+            {{/each}}
+            <input type="submit" value="Update" class="btn btn-primary">
+        </form>
+    </div>
+</div>
+{{foot}}
+</html>

@@ -1,0 +1,48 @@
+<h1>Create Property</h1>
+<div class=""
+<div class="row">
+    <div class="col-md-2">
+        No Navigation
+    </div>
+    <div class="col-md-10">
+        <form action="/property/create" method="post" class="form-horizontal">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Name</label>
+                <div class="col-sm-10">
+                    <input name="PropName" id="PropName" class="ORM form-control"   value="{{value}}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Address Line 1</label>
+                <div class="col-sm-10">
+                    <input name="PropAddrLine1" id="PropAddrLine1" class="ORM form-control"   value="{{value}}"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Address Line 2</label>
+                <div class="col-sm-10">
+                    <input name="PropAddrLine2" id="PropAddrLine2" class="ORM form-control"   value="{{value}}"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">City</label>
+                <div class="col-sm-10">
+                    <input name="PropCity" id="PropCity" class="ORM form-control"   value="{{value}}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">State</label>
+                <div class="col-sm-10">
+                    <input name="PropState" id="PropState" class="ORM form-control"   value="{{value}}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Zip</label>
+                <div class="col-sm-10">
+                    <input name="PropZip" id="PropZip" class="ORM form-control"   value="{{value}}" />
+                </div>
+            </div>
+            <input type="submit" value="Create" class="btn btn-primary">
+        </form>
+    </div>
+</div>

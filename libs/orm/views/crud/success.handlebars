@@ -1,0 +1,18 @@
+<html>
+{{head}}
+<h1>{{title}}</h1>
+<div class="row">
+    <div class="col-md-2">
+        {{nav}}
+    </div>
+    <div class="col-md-10">
+        <h2 class="bg-success">
+            [[#if short]] [[short]] [[else]] No Message [[/if]]
+        </h2>
+        <p  class="bg-info">
+            [[#if body]] [[body]] [[else]] No details available. [[/if]]
+        </p>
+    </div>
+</div>
+{{foot}}
+</html>

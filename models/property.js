@@ -26,6 +26,7 @@ module.exports = function(db){
 
     return {
         schema : schema,
-        query  : query
+        query  : query,
+        route  : 'propmgmt'
     };
 };

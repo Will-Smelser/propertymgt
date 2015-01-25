@@ -38,9 +38,9 @@ var ORM = {
     },
     types: {
         String: function (value) {
-            this.clazz = "types";
-            this.type = "String";
-            this.value = (typeof value === "undefined") ? "" : value;
+            this.clazz = 'types';
+            this.type = 'String';
+            this.value = (value) ? value : '';
             this.id = "Type";
 
             var self = this;
@@ -87,11 +87,12 @@ var ORM = {
                     attr += x + '="'+self.attributes[x]+'" ';
 
                 return {
-                    create : "input.handlebars",
-                    read : "string.handlebars", //read view
-                    update : "input.handlebars",
-                    delete : "string.handlebars",
-
+                    views : {
+                        create : "input.handlebars",
+                        read   : "string.handlebars",
+                        update : "input.handlebars",
+                        delete : "string.handlebars"
+                    },
                     id   : self._field.id,
                     name : (typeof self.name === "undefined") ? self._field.id : self.name,
                     attributes : attr,
